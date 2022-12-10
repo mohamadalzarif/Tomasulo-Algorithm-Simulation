@@ -19,7 +19,7 @@ struct Tomasulo;
 and wrote back.*/
 struct InstructionStatus
 {
-	
+
 	short  issue;
 	short executionStart;
 	short executionComplete;
@@ -28,7 +28,7 @@ struct InstructionStatus
 	short executionCyclesRemaining;
 	InstructionStatus()
 	{
-		issue = executionStart = executionComplete = writeBack = executionCyclesRemaining= -1;
+		issue = executionStart = executionComplete = writeBack = executionCyclesRemaining = -1;
 	}
 };
 
@@ -49,8 +49,8 @@ string const InstructionType::SUBD = "SUB";
 string const InstructionType::ADDD = "ADD";
 string const InstructionType::DIVD = "DIV";
 
-string const InstructionType::LOAD="LOAD";
-string const InstructionType::BNE="BNE";
+string const InstructionType::LOAD = "LOAD";
+string const InstructionType::BNE = "BNE";
 string const InstructionType::STORE = "STORE";
 
 struct ReservationStationType
@@ -81,10 +81,10 @@ struct Instruction
 	int immediateOffset; //used only for i-type instructions
 	InstructionStatus instructionStatus;
 
- 	Instruction()
+	Instruction()
 	{
 		instructionType = Rd = Rs = Rt = "";
-	immediateOffset = -1;
+		immediateOffset = -1;
 	}
 };
 
@@ -104,20 +104,20 @@ struct ReservationStation
 	string Vk;
 	string Qj;
 	string Qk;
-	
-	Instruction *instruction; //the pointer to the current instruction being executed
+
+	Instruction* instruction; //the pointer to the current instruction being executed
 
 	ReservationStation()
 	{
 		isBusy = false;
-	instruction = nullptr;
+		instruction = nullptr;
 	}
 
 
 };
 
 struct LoadStoreBuffer
-{   
+{
 	string name;
 	bool isBusy;
 	string address;
@@ -132,7 +132,7 @@ struct LoadStoreBuffer
 	}
 
 	string fu;
-	Instruction *instruction;
+	Instruction* instruction;
 };
 
 void gotoxy(short, short);
@@ -142,22 +142,22 @@ struct Tomasulo
 
 	string reason;
 	int currentCycleNumber;
-	LoadStoreBuffer *loadBuffers;
-	LoadStoreBuffer *storeBuffers;
-	ReservationStation *addSubReservationStations;
-	ReservationStation *multDivReservationStations;
-	RegisterStatus *registerStatus;
+	LoadStoreBuffer* loadBuffers;
+	LoadStoreBuffer* storeBuffers;
+	ReservationStation* addSubReservationStations;
+	ReservationStation* multDivReservationStations;
+	RegisterStatus* registerStatus;
 
 
 	int totalLoadBuffers;
 	int totalStoreBuffers;
 	int totalAddSubReservationStations;
 	int totalMultDivReservationStations;
-	
+
 	int totalRegisters;
 	Instruction* instructions;
 	int totalInstructions;
-   
+
 	//the following fields tell us how many cycles does each instruction type take in execution stage.
 	int totalLoadStoreCycles;
 	int totalAddSubCycles;
@@ -200,7 +200,7 @@ struct Tomasulo
 		for (int i = 0; i < 4; i++)
 		{
 			read >> data;
-		//	cout << data << " ";
+			//	cout << data << " ";
 			if (_strcmpi(data.c_str(), "Add_Sub_Reservation_Stations") == 0)
 			{
 				addSubDone = true;
@@ -212,59 +212,59 @@ struct Tomasulo
 			{
 				multDivDone = true;
 				read >> this->totalMultDivReservationStations;
-			//	cout << this->totalMultDivReservationStations << endl;
+				//	cout << this->totalMultDivReservationStations << endl;
 			}
 
 			else if (_strcmpi(data.c_str(), "Load_Buffers") == 0)
 			{
 				loadDone = true;
 				read >> this->totalLoadBuffers;
-			//	cout << this->totalLoadBuffers << endl;
+				//	cout << this->totalLoadBuffers << endl;
 			}
 
 			else if (_strcmpi(data.c_str(), "Store_Buffers") == 0)
 			{
 				storeDone = true;
 				read >> this->totalStoreBuffers;
-			//	cout << this->totalStoreBuffers << endl;
+				//	cout << this->totalStoreBuffers << endl;
 			}
 
 		}
-			if (!storeDone)
-			{
-				cout << "-> Information about the number of store buffers missing." << endl;
-				exit_ = true;
-		
-			}
-			else if (!loadDone)
-			{
-				cout << "-> Informaton about the number of load buffers missing." << endl;
-				exit_ = true;
-			}
-			else if (!multDivDone)
-			{
-				cout << "-> Information about the number of Mult Div Reservation Stations missing" << endl;
-				exit_ = true;
-			}
+		if (!storeDone)
+		{
+			cout << "-> Information about the number of store buffers missing." << endl;
+			exit_ = true;
 
-			else if (!addSubDone)
-			{
-				cout << "-> Information about the number of Add Sub Reservation Stations missing." << endl;
-				exit_ = true;
-			}
-		
+		}
+		else if (!loadDone)
+		{
+			cout << "-> Informaton about the number of load buffers missing." << endl;
+			exit_ = true;
+		}
+		else if (!multDivDone)
+		{
+			cout << "-> Information about the number of Mult Div Reservation Stations missing" << endl;
+			exit_ = true;
+		}
+
+		else if (!addSubDone)
+		{
+			cout << "-> Information about the number of Add Sub Reservation Stations missing." << endl;
+			exit_ = true;
+		}
+
 
 
 		//reading information about cycle instructions
-			bool multCyclesDone = false,
-				 divCyclesDones = false,
-				 addSubCyclesDone = false,
-				 loadStoreCyclesDone = false;
-		
-			while (read.peek() != '#')
-				read.ignore();
+		bool multCyclesDone = false,
+			divCyclesDones = false,
+			addSubCyclesDone = false,
+			loadStoreCyclesDone = false;
 
-		getline(read,data); //ignore the line containing comments
+		while (read.peek() != '#')
+			read.ignore();
+
+		getline(read, data); //ignore the line containing comments
 		//cout << data << endl;
 		for (int i = 0; i < 4; i++)
 		{
@@ -274,186 +274,186 @@ struct Tomasulo
 			{
 
 				read >> this->totalAddSubCycles;
-			//	cout << this->totalAddSubCycles << endl;
+				//	cout << this->totalAddSubCycles << endl;
 				addSubCyclesDone = true;
 			}
 
 			else if (_strcmpi(data.c_str(), "Mul_Cycles") == 0)
 			{
 				read >> this->totalMultCylcles;
-			//	cout << this->totalMultCylcles << endl;
+				//	cout << this->totalMultCylcles << endl;
 				multCyclesDone = true;
 			}
 			else if (_strcmpi(data.c_str(), "Load_Store_Cycles") == 0)
 			{
 				read >> this->totalLoadStoreCycles;
-			//	cout << this->totalLoadStoreCycles << endl;
+				//	cout << this->totalLoadStoreCycles << endl;
 				loadStoreCyclesDone = true;
 			}
 			else if (_strcmpi(data.c_str(), "Div_Cycles") == 0)
 			{
 				read >> this->totalDivCycles;
-			//	cout << this->totalDivCycles << endl;
+				//	cout << this->totalDivCycles << endl;
 				divCyclesDones = true;
 			}
 
 		}
 
-				if (!addSubCyclesDone)
-				{
-					cout << "-> Information about the number of add Sub Cycles missing.";
-					exit_ = true;
-				}
+		if (!addSubCyclesDone)
+		{
+			cout << "-> Information about the number of add Sub Cycles missing.";
+			exit_ = true;
+		}
 
-				if (!multCyclesDone)
-				{
-					cout << "-> Information about the number of mul cycles missing." << endl;
-					exit_ = true;
-				}
-				else if (!divCyclesDones)
-				{
-					cout << "-> Information about the number of div cycles missing." << endl;
-					exit_ = true;
-				}
-				else if (!loadStoreCyclesDone)
-				{
-					cout << "-> Information about the number of load store cycles missing." << endl;
-					exit_ = true;
-				}
+		if (!multCyclesDone)
+		{
+			cout << "-> Information about the number of mul cycles missing." << endl;
+			exit_ = true;
+		}
+		else if (!divCyclesDones)
+		{
+			cout << "-> Information about the number of div cycles missing." << endl;
+			exit_ = true;
+		}
+		else if (!loadStoreCyclesDone)
+		{
+			cout << "-> Information about the number of load store cycles missing." << endl;
+			exit_ = true;
+		}
 
-				if (exit_ == true)
-				{
-					system("pause");
-					exit(EXIT_FAILURE);
-					
-				}
+		if (exit_ == true)
+		{
+			system("pause");
+			exit(EXIT_FAILURE);
 
-				this->loadBuffers = new LoadStoreBuffer[this->totalLoadBuffers];
-				for (int i = 0; i < totalLoadBuffers; i++)
-				{
-					char num[10];
-					_itoa_s(i, num, 10);
-					this->loadBuffers[i].name = LoadStoreBufferType::LOAD;
-					this->loadBuffers[i].name.append(num);
-				}
+		}
 
-				this->storeBuffers = new LoadStoreBuffer[this->totalStoreBuffers];
-				for (int i = 0; i < totalStoreBuffers; i++)
-				{
-					char num[10];
-					_itoa_s(i, num, 10);
+		this->loadBuffers = new LoadStoreBuffer[this->totalLoadBuffers];
+		for (int i = 0; i < totalLoadBuffers; i++)
+		{
+			char num[10];
+			_itoa_s(i, num, 10);
+			this->loadBuffers[i].name = LoadStoreBufferType::LOAD;
+			this->loadBuffers[i].name.append(num);
+		}
+
+		this->storeBuffers = new LoadStoreBuffer[this->totalStoreBuffers];
+		for (int i = 0; i < totalStoreBuffers; i++)
+		{
+			char num[10];
+			_itoa_s(i, num, 10);
 			//		cout << "NUM: " << num << endl;
 			//		system("pause");
-					this->storeBuffers[i].name = LoadStoreBufferType::STORE;
-					this->storeBuffers[i].name.append(num);
-					//cout << this->storeBuffers[i].name;
-				}
+			this->storeBuffers[i].name = LoadStoreBufferType::STORE;
+			this->storeBuffers[i].name.append(num);
+			//cout << this->storeBuffers[i].name;
+		}
 
-				this->addSubReservationStations = new ReservationStation[this->totalAddSubReservationStations];
-				for (int i = 0; i < this->totalAddSubReservationStations; i++)
-				{
-					char num[10];
-					_itoa_s(i, num, 10);
-					this->addSubReservationStations[i].name = ReservationStationType::ADDD;
-					this->addSubReservationStations[i].name.append(num);
-				}
+		this->addSubReservationStations = new ReservationStation[this->totalAddSubReservationStations];
+		for (int i = 0; i < this->totalAddSubReservationStations; i++)
+		{
+			char num[10];
+			_itoa_s(i, num, 10);
+			this->addSubReservationStations[i].name = ReservationStationType::ADDD;
+			this->addSubReservationStations[i].name.append(num);
+		}
 
-				this->multDivReservationStations = new ReservationStation[this->totalMultDivReservationStations];
-				for (int i = 0; i < this->totalMultDivReservationStations; i++)
-				{
-					char num[10];
-					_itoa_s(i, num, 10);
-					this->multDivReservationStations[i].name = ReservationStationType::MULTD;
-					this->multDivReservationStations[i].name.append(num);
-				}
-
-
-
-				while (read.peek() != '#')
-					read.ignore();
-
-				//reading information about the number of registers;
-				getline(read, data);
-				read >> data;
-				read >> this->totalRegisters;
-				this->registerStatus = new RegisterStatus[totalRegisters];
-				
-				for (int i = 0; i < totalRegisters; i++)
-				{
-					this->registerStatus[i].registerName = "F";
-					char num[10];
-					_itoa_s(i, num, 10);
-					this->registerStatus[i].registerName.append(num);
-				}
+		this->multDivReservationStations = new ReservationStation[this->totalMultDivReservationStations];
+		for (int i = 0; i < this->totalMultDivReservationStations; i++)
+		{
+			char num[10];
+			_itoa_s(i, num, 10);
+			this->multDivReservationStations[i].name = ReservationStationType::MULTD;
+			this->multDivReservationStations[i].name.append(num);
+		}
 
 
-				//reading instructions
-				while (read.peek() != '#')
-					read.ignore();
 
-				getline(read, data); //ignore the first line
-				read >> this->totalInstructions;
-				this->instructions = new Instruction[this->totalInstructions];
+		while (read.peek() != '#')
+			read.ignore();
 
-				for (int i = 0; i < totalInstructions; i++)
-				{
-					string instruction;
-					read >> instruction;
-					if (_strcmpi(instruction.c_str(), InstructionType::ADDD.c_str()) == 0 )
-					{
-						this->instructions[i].instructionType = InstructionType::ADDD;
-						read >> this->instructions[i].Rd;
-						read >> this->instructions[i].Rs;
-						read >> this->instructions[i].Rt;
-					}
+		//reading information about the number of registers;
+		getline(read, data);
+		read >> data;
+		read >> this->totalRegisters;
+		this->registerStatus = new RegisterStatus[totalRegisters];
 
-					else if (_strcmpi(instruction.c_str(), InstructionType::SUBD.c_str()) == 0)
-					{
-						this->instructions[i].instructionType = InstructionType::SUBD;
-						read >> this->instructions[i].Rd;
-						read >> this->instructions[i].Rs;
-						read >> this->instructions[i].Rt;
-
-					}
-					else if (_strcmpi(instruction.c_str(), InstructionType::MULTD.c_str()) == 0)
-					{
-						this->instructions[i].instructionType = InstructionType::MULTD;
-						read >> this->instructions[i].Rd;
-						read >> this->instructions[i].Rs;
-						read >> this->instructions[i].Rt;
-
-					}
-					else if (_strcmpi(instruction.c_str(), InstructionType::DIVD.c_str()) == 0)
-					{
-						this->instructions[i].instructionType = InstructionType::DIVD;
-						read >> this->instructions[i].Rd;
-						read >> this->instructions[i].Rs;
-						read >> this->instructions[i].Rt;
-
-					}
-
-					else if (_strcmpi(instruction.c_str(), InstructionType::LOAD.c_str())==0)
-					{
-						this->instructions[i].instructionType = InstructionType::LOAD;
-						read >> this->instructions[i].Rt;
-						read >> this->instructions[i].immediateOffset;
-						read >> this->instructions[i].Rs;
-					}
-
-					else if (_strcmpi(instruction.c_str(), InstructionType::STORE.c_str()) == 0)
-					{
-						this->instructions[i].instructionType = InstructionType::STORE;
-						read >> this->instructions[i].Rt;
-						read >> this->instructions[i].immediateOffset;
-						read >> this->instructions[i].Rs;
-
-					}
+		for (int i = 0; i < totalRegisters; i++)
+		{
+			this->registerStatus[i].registerName = "F";
+			char num[10];
+			_itoa_s(i, num, 10);
+			this->registerStatus[i].registerName.append(num);
+		}
 
 
-				
-				}
-				
-			
+		//reading instructions
+		while (read.peek() != '#')
+			read.ignore();
+
+		getline(read, data); //ignore the first line
+		read >> this->totalInstructions;
+		this->instructions = new Instruction[this->totalInstructions];
+
+		for (int i = 0; i < totalInstructions; i++)
+		{
+			string instruction;
+			read >> instruction;
+			if (_strcmpi(instruction.c_str(), InstructionType::ADDD.c_str()) == 0)
+			{
+				this->instructions[i].instructionType = InstructionType::ADDD;
+				read >> this->instructions[i].Rd;
+				read >> this->instructions[i].Rs;
+				read >> this->instructions[i].Rt;
+			}
+
+			else if (_strcmpi(instruction.c_str(), InstructionType::SUBD.c_str()) == 0)
+			{
+				this->instructions[i].instructionType = InstructionType::SUBD;
+				read >> this->instructions[i].Rd;
+				read >> this->instructions[i].Rs;
+				read >> this->instructions[i].Rt;
+
+			}
+			else if (_strcmpi(instruction.c_str(), InstructionType::MULTD.c_str()) == 0)
+			{
+				this->instructions[i].instructionType = InstructionType::MULTD;
+				read >> this->instructions[i].Rd;
+				read >> this->instructions[i].Rs;
+				read >> this->instructions[i].Rt;
+
+			}
+			else if (_strcmpi(instruction.c_str(), InstructionType::DIVD.c_str()) == 0)
+			{
+				this->instructions[i].instructionType = InstructionType::DIVD;
+				read >> this->instructions[i].Rd;
+				read >> this->instructions[i].Rs;
+				read >> this->instructions[i].Rt;
+
+			}
+
+			else if (_strcmpi(instruction.c_str(), InstructionType::LOAD.c_str()) == 0)
+			{
+				this->instructions[i].instructionType = InstructionType::LOAD;
+				read >> this->instructions[i].Rt;
+				read >> this->instructions[i].immediateOffset;
+				read >> this->instructions[i].Rs;
+			}
+
+			else if (_strcmpi(instruction.c_str(), InstructionType::STORE.c_str()) == 0)
+			{
+				this->instructions[i].instructionType = InstructionType::STORE;
+				read >> this->instructions[i].Rt;
+				read >> this->instructions[i].immediateOffset;
+				read >> this->instructions[i].Rs;
+
+			}
+
+
+
+		}
+
+
 
 	}
 	int findFreeReservationStationForStoreInstruction()
@@ -492,12 +492,12 @@ struct Tomasulo
 	}
 	int findFreeRservationStationForLoadInstruction()
 	{
-		for (int i = 0; i <totalLoadBuffers; i++)
+		for (int i = 0; i < totalLoadBuffers; i++)
 		{
 			if (loadBuffers[i].isBusy == false)
-			return i;
+				return i;
 
-	    }
+		}
 
 		return -1;
 
@@ -559,8 +559,6 @@ struct Tomasulo
 			}
 		}
 	}
-
-	
 	int issueInstruction(int currentInstructionNumberToBeIssued)
 	{
 		int bufferNo;
@@ -574,11 +572,11 @@ struct Tomasulo
 				bufferNo = findFreeRservationStationForLoadInstruction();
 
 				if (bufferNo == -1)
-				{   
-			
+				{
+
 					reason += "-> The instruction Number: ";
 					reason.append(num);
-					reason+=" has not been issued due to the structural hazard.\n";
+					reason += " has not been issued due to the structural hazard.\n";
 
 					return -1;
 				}
@@ -594,29 +592,29 @@ struct Tomasulo
 					this->instructions[currentInstructionNumberToBeIssued].instructionStatus.issue = currentCycleNumber;
 					reason += "-> The instruction number: ";
 					reason.append(num);
-					reason += " has been issued at Load Buffer= "+loadBuffers[bufferNo].name+"\n";
+					reason += " has been issued at Load Buffer= " + loadBuffers[bufferNo].name + "\n";
 
 					this->instructions[currentInstructionNumberToBeIssued].instructionStatus.executionCyclesRemaining = this->totalLoadStoreCycles;
 					//RAW hazard check
 					int regNumber = atoi(&this->instructions[currentInstructionNumberToBeIssued].Rt.c_str()[1]);//extract register number fro register name
 					this->loadBuffers[bufferNo].fu = this->registerStatus[regNumber].writingUnit;
-					
-				 
+
+
 					//set the register status of register which is going to be written by this load instruction
-					this->registerStatus[regNumber].writingUnit = loadBuffers[bufferNo].name; 
+					this->registerStatus[regNumber].writingUnit = loadBuffers[bufferNo].name;
 
-				
 
-				    
+
+
 				}
-			
-            }
+
+			}
 
 
 			else if (instructions[currentInstructionNumberToBeIssued].instructionType == InstructionType::STORE)
 			{
-				 bufferNo = findFreeReservationStationForStoreInstruction();
-				
+				bufferNo = findFreeReservationStationForStoreInstruction();
+
 				if (bufferNo == -1)
 				{
 					reason += "-> The instruction number: ";
@@ -632,12 +630,12 @@ struct Tomasulo
 					reason += " has been issued at Store Buffer= " + storeBuffers[bufferNo].name + "\n";
 
 					this->storeBuffers[bufferNo].isBusy = true;
-					
+
 					//checking RAW hazard
 					int regNumber = atoi(&this->instructions[currentInstructionNumberToBeIssued].Rt.c_str()[1]);
 					this->storeBuffers[bufferNo].fu = this->registerStatus[regNumber].writingUnit;
-				
-					this->instructions[currentInstructionNumberToBeIssued].instructionStatus.executionCyclesRemaining=this->totalLoadStoreCycles;
+
+					this->instructions[currentInstructionNumberToBeIssued].instructionStatus.executionCyclesRemaining = this->totalLoadStoreCycles;
 
 					storeBuffers[bufferNo].isBusy = true;
 					storeBuffers[bufferNo].instruction = &this->instructions[currentInstructionNumberToBeIssued];
@@ -648,16 +646,16 @@ struct Tomasulo
 					storeBuffers[bufferNo].address += " + ";
 					storeBuffers[bufferNo].address.append(offset);
 
-					
 
-				
+
+
 				}
 			}
 
 			else if (instructions[currentInstructionNumberToBeIssued].instructionType == InstructionType::ADDD || instructions[currentInstructionNumberToBeIssued].instructionType == InstructionType::SUBD)
 			{
 				int bufferNo = findFreeReservationStationforAddSubInstruction();
-				
+
 
 				if (bufferNo == -1)
 				{
@@ -673,23 +671,23 @@ struct Tomasulo
 
 					reason += "-> The instruction No: ";
 					reason.append(num);
-					reason += " has been issued at Reservation Station= "+addSubReservationStations[bufferNo].name+ "\n";
+					reason += " has been issued at Reservation Station= " + addSubReservationStations[bufferNo].name + "\n";
 
-					
-				
+
+
 					this->instructions[currentInstructionNumberToBeIssued].instructionStatus.executionCyclesRemaining = this->totalAddSubCycles;
 					this->addSubReservationStations[bufferNo].instructionType = this->instructions[currentInstructionNumberToBeIssued].instructionType;
 					this->addSubReservationStations[bufferNo].instruction = &this->instructions[currentInstructionNumberToBeIssued];
 					this->addSubReservationStations[bufferNo].isBusy = true;
 					this->instructions[currentInstructionNumberToBeIssued].instructionStatus.issue = currentCycleNumber;
-				
-				
+
+
 					//checking RAW hazard 
 					//RS
 					int regNumber = atoi(&this->instructions[currentInstructionNumberToBeIssued].Rs.c_str()[1]);
-				
+
 					this->addSubReservationStations[bufferNo].Qj = this->registerStatus[regNumber].writingUnit;
-				
+
 					//Rt
 					regNumber = atoi(&this->instructions[currentInstructionNumberToBeIssued].Rt.c_str()[1]);
 					this->addSubReservationStations[bufferNo].Qk = this->registerStatus[regNumber].writingUnit;
@@ -709,7 +707,7 @@ struct Tomasulo
 					regNumber = atoi(&this->instructions[currentInstructionNumberToBeIssued].Rd.c_str()[1]);
 					this->registerStatus[regNumber].writingUnit = this->addSubReservationStations[bufferNo].name;
 
-	
+
 				}
 			}
 
@@ -740,7 +738,7 @@ struct Tomasulo
 						this->instructions[currentInstructionNumberToBeIssued].instructionStatus.executionCyclesRemaining = this->totalMultCylcles;
 					else
 						this->instructions[currentInstructionNumberToBeIssued].instructionStatus.executionCyclesRemaining = this->totalDivCycles;
-				
+
 					this->multDivReservationStations[bufferNo].instructionType = this->instructions[currentInstructionNumberToBeIssued].instructionType;
 					this->multDivReservationStations[bufferNo].instruction = &this->instructions[currentInstructionNumberToBeIssued];
 					this->multDivReservationStations[bufferNo].isBusy = true;
@@ -750,31 +748,31 @@ struct Tomasulo
 					//checking RAW hazard 
 					//RS
 					int regNumber = atoi(&this->instructions[currentInstructionNumberToBeIssued].Rs.c_str()[1]);
-					
+
 					this->multDivReservationStations[bufferNo].Qj = this->registerStatus[regNumber].writingUnit;
 
 					//Rt
 					regNumber = atoi(&this->instructions[currentInstructionNumberToBeIssued].Rt.c_str()[1]);
-				
+
 					this->multDivReservationStations[bufferNo].Qk = this->registerStatus[regNumber].writingUnit;
 
 					if (this->multDivReservationStations[bufferNo].Qj == "")
-					{  
+					{
 						this->multDivReservationStations[bufferNo].Vj = "R(" + this->instructions[currentInstructionNumberToBeIssued].Rs + ")";
 					}
 
 					if (this->multDivReservationStations[bufferNo].Qk == "")
 					{
-						
-					
+
+
 						this->multDivReservationStations[bufferNo].Vk = "R(" + this->instructions[currentInstructionNumberToBeIssued].Rt + ")";
-						
-					
+
+
 					}
 
 					//setting register status
 					regNumber = atoi(&this->instructions[currentInstructionNumberToBeIssued].Rd.c_str()[1]);
-				
+
 					this->registerStatus[regNumber].writingUnit = this->multDivReservationStations[bufferNo].name;
 
 				}
@@ -784,10 +782,9 @@ struct Tomasulo
 		}
 		return 0;
 	}
-
 	void writeBack()
 	{
-	
+
 
 		for (int i = 0; i < totalLoadBuffers; i++)
 		{
@@ -803,16 +800,16 @@ struct Tomasulo
 				continue; //the instruction has completed execution in the current cycle, so it cannot be written in the current Cycle
 
 			this->loadBuffers[i].instruction->instructionStatus.writeBack = currentCycleNumber;
-		
+
 			reason += "-> The instruction at Load Buffer= " + this->loadBuffers[i].name + " has written back.\n";
-			int regNum=atoi(&this->loadBuffers[i].instruction->Rt.c_str()[1]);
+			int regNum = atoi(&this->loadBuffers[i].instruction->Rt.c_str()[1]);
 			if (this->registerStatus[regNum].writingUnit == this->loadBuffers[i].name)
 				this->registerStatus[regNum].writingUnit = "";
-			
+
 			this->loadBuffers[i].isBusy = false;
 			this->loadBuffers[i].address = "";
 			this->loadBuffers[i].instruction = nullptr;
-			
+
 			char numChar[10];
 			_itoa_s(num, numChar, 10);
 			string val = "M(A";
@@ -877,7 +874,7 @@ struct Tomasulo
 			_itoa_s(num, numChar, 10);
 			string val = "V";
 			val.append(numChar);
-		
+
 			broadCastResult(val, this->addSubReservationStations[i].name);
 			num++;
 		}
@@ -923,27 +920,25 @@ struct Tomasulo
 
 
 	}
-
-
 	void execute()
 	{
 		for (int i = 0; i < totalLoadBuffers; i++)
 		{
-			if (this->loadBuffers[i].isBusy == false) 
+			if (this->loadBuffers[i].isBusy == false)
 				continue;
 
-			if (this->loadBuffers[i].fu != "") 
+			if (this->loadBuffers[i].fu != "")
 				continue;//exeuction not started due to RAW hazard
 
 			if (this->loadBuffers[i].instruction->instructionStatus.executionStart == -1)
-			{   
+			{
 				if (this->loadBuffers[i].instruction->instructionStatus.issue == currentCycleNumber)
 					continue; //the instruction has been issued in the current cycle, so it cannot being instruction in the current cycle.
 
 				//execution started
 				this->loadBuffers[i].instruction->instructionStatus.executionStart = currentCycleNumber;
 				this->loadBuffers[i].instruction->instructionStatus.executionCyclesRemaining--;
-			
+
 
 				if (this->loadBuffers[i].instruction->instructionStatus.executionCyclesRemaining == 0)
 				{   //execution completed
@@ -957,9 +952,9 @@ struct Tomasulo
 					continue;
 				}
 			}
-			
-			if (this->loadBuffers[i].instruction->instructionStatus.executionCyclesRemaining!=0)
-			this->loadBuffers[i].instruction->instructionStatus.executionCyclesRemaining--;
+
+			if (this->loadBuffers[i].instruction->instructionStatus.executionCyclesRemaining != 0)
+				this->loadBuffers[i].instruction->instructionStatus.executionCyclesRemaining--;
 			else continue;
 
 			if (this->loadBuffers[i].instruction->instructionStatus.executionCyclesRemaining == 0)
@@ -973,11 +968,11 @@ struct Tomasulo
 				reason += "-> the instruction at Load Buffer= " + this->loadBuffers[i].name + " has completed one more execution cycle.\n";
 				continue;
 			}
-			
-			
+
+
 		}//end of load buffers loop
 
-		
+
 		for (int i = 0; i < totalStoreBuffers; i++)
 		{
 			if (this->storeBuffers[i].isBusy == false)
@@ -987,14 +982,14 @@ struct Tomasulo
 				continue;//exeuction not started due to RAW hazard
 
 			if (this->storeBuffers[i].instruction->instructionStatus.executionStart == -1)
-			{   
+			{
 				if (this->storeBuffers[i].instruction->instructionStatus.issue == currentCycleNumber)
 					continue; //the instruction has been issued in the current cycle, so it cannot start execution in the current cycle
 
 				//execution started
 				this->storeBuffers[i].instruction->instructionStatus.executionStart = currentCycleNumber;
 				this->storeBuffers[i].instruction->instructionStatus.executionCyclesRemaining--;
-				
+
 				if (this->storeBuffers[i].instruction->instructionStatus.executionCyclesRemaining == 0)
 				{   //execution completed
 					this->storeBuffers[i].instruction->instructionStatus.executionComplete = currentCycleNumber;
@@ -1008,10 +1003,10 @@ struct Tomasulo
 				}
 			}
 
-			if (this->storeBuffers[i].instruction->instructionStatus.executionCyclesRemaining!=0)
-			this->storeBuffers[i].instruction->instructionStatus.executionCyclesRemaining--;
+			if (this->storeBuffers[i].instruction->instructionStatus.executionCyclesRemaining != 0)
+				this->storeBuffers[i].instruction->instructionStatus.executionCyclesRemaining--;
 			else continue;
-			
+
 			if (this->storeBuffers[i].instruction->instructionStatus.executionCyclesRemaining == 0)
 			{   //execution completed
 				this->storeBuffers[i].instruction->instructionStatus.executionComplete = currentCycleNumber;
@@ -1026,13 +1021,13 @@ struct Tomasulo
 
 		}//end of store buffers loop
 
-	
+
 		for (int i = 0; i < totalAddSubReservationStations; i++)
 		{
 			if (this->addSubReservationStations[i].isBusy == false)
 				continue;
 
-			if (this->addSubReservationStations[i].Qj!="" || this->addSubReservationStations[i].Qk!="")
+			if (this->addSubReservationStations[i].Qj != "" || this->addSubReservationStations[i].Qk != "")
 				continue;//exeuction not started due to RAW hazard
 
 			if (this->addSubReservationStations[i].instruction->instructionStatus.executionStart == -1)
@@ -1057,8 +1052,8 @@ struct Tomasulo
 				}
 			}
 
-			if (this->addSubReservationStations[i].instruction->instructionStatus.executionCyclesRemaining!=0)
-			this->addSubReservationStations[i].instruction->instructionStatus.executionCyclesRemaining--;
+			if (this->addSubReservationStations[i].instruction->instructionStatus.executionCyclesRemaining != 0)
+				this->addSubReservationStations[i].instruction->instructionStatus.executionCyclesRemaining--;
 			else continue;
 
 			if (this->addSubReservationStations[i].instruction->instructionStatus.executionCyclesRemaining == 0)
@@ -1108,8 +1103,8 @@ struct Tomasulo
 				}
 			}
 
-			if (this->multDivReservationStations[i].instruction->instructionStatus.executionCyclesRemaining!=0)
-			this->multDivReservationStations[i].instruction->instructionStatus.executionCyclesRemaining--;
+			if (this->multDivReservationStations[i].instruction->instructionStatus.executionCyclesRemaining != 0)
+				this->multDivReservationStations[i].instruction->instructionStatus.executionCyclesRemaining--;
 			else continue;
 
 			if (this->multDivReservationStations[i].instruction->instructionStatus.executionCyclesRemaining == 0)
@@ -1128,15 +1123,14 @@ struct Tomasulo
 
 
 	}
-
 	void Simulate()
 	{
-		
+
 		int currentInstructionNumberToBeIssued = 0;
 		currentCycleNumber = 0;
-	
-	
-	
+
+
+
 		while (true)
 		{
 			gotoxy(0, 0);
@@ -1148,20 +1142,19 @@ struct Tomasulo
 			system("cls");
 			reason = "";
 
-			int flag=issueInstruction(currentInstructionNumberToBeIssued);
+			int flag = issueInstruction(currentInstructionNumberToBeIssued);
 
-			 if (flag != -1)
-				 currentInstructionNumberToBeIssued++;
+			if (flag != -1)
+				currentInstructionNumberToBeIssued++;
 
 			execute();
 			writeBack();
-	
-			
-	
-	    }
+
+
+
+		}
 
 	}
-
 	void print()
 	{
 		int y = 2;
@@ -1172,7 +1165,7 @@ struct Tomasulo
 		gotoxy(27, y + 1);
 
 		cout << "__________________________________";
-		
+
 		int j = 0;
 		for (int i = 0; i < totalInstructions; i++)
 		{
@@ -1182,21 +1175,21 @@ struct Tomasulo
 
 			gotoxy(2, j + y + 2);
 			if (instructions[i].instructionType == InstructionType::LOAD || instructions[i].instructionType == InstructionType::STORE)
-				cout <<std::left<<setw(3)<<arr<< std::left << setw(5) << instructions[i].instructionType << setfill(' ') << std::right << setw(4) << instructions[i].Rt << setw(5) << instructions[i].immediateOffset << "+" << setw(5) << instructions[i].Rs;
+				cout << std::left << setw(3) << arr << std::left << setw(5) << instructions[i].instructionType << setfill(' ') << std::right << setw(4) << instructions[i].Rt << setw(5) << instructions[i].immediateOffset << "+" << setw(5) << instructions[i].Rs;
 			else
 			{
 
-				
-				cout <<std::left << setw(3) <<arr<< std::left << setw(5) << instructions[i].instructionType << std::right << setw(4) << instructions[i].Rd << setw(5) << instructions[i].Rs << setw(6) << instructions[i].Rt;
+
+				cout << std::left << setw(3) << arr << std::left << setw(5) << instructions[i].instructionType << std::right << setw(4) << instructions[i].Rd << setw(5) << instructions[i].Rs << setw(6) << instructions[i].Rt;
 			}
-			
+
 
 
 			gotoxy(2 + 24, j + y + 2);
 			j++;
-		    
-			
-		
+
+
+
 			char instructionIssue[10];
 			char executionStart[10];
 			char executionComplete[10];
@@ -1207,122 +1200,15 @@ struct Tomasulo
 			_itoa_s(this->instructions[i].instructionStatus.executionComplete, executionComplete, 10);
 			_itoa_s(this->instructions[i].instructionStatus.writeBack, instructionWrite, 10);
 
-			cout << "|" << std::right << setw(7) << (instructions[i].instructionStatus.issue==-1 ? "" : instructionIssue) << "|" << setw(7) << (instructions[i].instructionStatus.executionStart==-1 ? "" : executionStart) << "|" << setw(7) << (instructions[i].instructionStatus.executionComplete==-1 ? "" :executionComplete) << "|" << setw(10) << (instructions[i].instructionStatus.writeBack==-1 ? "" : instructionWrite) << "|";
-		
+			cout << "|" << std::right << setw(7) << (instructions[i].instructionStatus.issue == -1 ? "" : instructionIssue) << "|" << setw(7) << (instructions[i].instructionStatus.executionStart == -1 ? "" : executionStart) << "|" << setw(7) << (instructions[i].instructionStatus.executionComplete == -1 ? "" : executionComplete) << "|" << setw(10) << (instructions[i].instructionStatus.writeBack == -1 ? "" : instructionWrite) << "|";
+
 			gotoxy(2 + 24, j + y + 2);
 
 			cout << "|_______|_______|_______|__________|";
 			j++;
 		}
 
-		//printing Load Store Buffer
-		gotoxy(70, y);
-		cout << "Load/Store Buffer:   Busy      Addr       FU";
-		y++;
-		gotoxy(66 + 22 + 2, y);
-		cout << "_____________________________";
-		for (int i = 0; i < totalLoadBuffers; i++)
-		{
-			y++;;
-			gotoxy(76 + 2, y);
-			cout << setw(10) << std::right << loadBuffers[i].name;
-			cout << " ";
-			cout << "|" << std::right << setw(7) << (loadBuffers[i].isBusy == true ? "yes" : "no") << "|" << setw(10) << loadBuffers[i].address << "|" << setw(10) << loadBuffers[i].fu << "|";
-			
-			if (loadBuffers[i].instruction != nullptr)
-				cout <<setw(3)<< loadBuffers[i].instruction->instructionStatus.executionCyclesRemaining;
-			y++;
-			gotoxy(76 + 2 + 11, y);
-			cout << "|_______|__________|__________|" << endl;
-		}
-
-		for (int i = 0; i < totalStoreBuffers; i++)
-		{
-			y++;;
-			gotoxy(76 + 2, y);
-			cout << setw(10)<<setfill(' ') << std::right <<storeBuffers[i].name;
-			cout << " ";
-			cout << "|" << std::right << setw(7) << (storeBuffers[i].isBusy == true ? "yes" : "no") << "|" << setw(10) << storeBuffers[i].address << "|" << setw(10) << storeBuffers[i].fu << "|";
-			if (storeBuffers[i].instruction != nullptr)
-				cout << setw(3) << storeBuffers[i].instruction->instructionStatus.executionCyclesRemaining;
-
-			y++;
-			gotoxy(76 + 2 + 11, y);
-			cout << "|_______|__________|__________|" << endl;
-		}
-
-
-		//reservation stations
-		y = (y > j ? y : j);
-		y += 5;
-		gotoxy(4, y);
-		cout << "Reservation Stations:";
-		y++;
-		gotoxy(21, y);
-		cout << " Name   Busy    Op      Vj       Vk       Qj       Qk ";
-
-		y++;
-		gotoxy(21 + 7, y);
-		cout << "_________________________________________________";
-		for (int i = 0; i < totalAddSubReservationStations; i++)
-		{
-			y++;
-			gotoxy(19, y);
-			cout << std::right << setw(7) << addSubReservationStations[i].name << " |" << setw(5) << (addSubReservationStations[i].isBusy == true ? "yes" : "no") << "|" << setw(7) << addSubReservationStations[i].instructionType << "|" << setw(8) << addSubReservationStations[i].Vj << "|" << setw(8) << addSubReservationStations[i].Vk << "|" << setw(8) << addSubReservationStations[i].Qj << "|" << setw(8) << addSubReservationStations[i].Qk << "|";
-			if (addSubReservationStations[i].instruction != nullptr)
-			{
-				cout << setw(3) << addSubReservationStations[i].instruction->instructionStatus.executionCyclesRemaining;
-			}
-			y++;
-			gotoxy(19 + 7 + 1, y);
-			cout << "|_____|_______|________|________|________|________|";
-		}
-
-		for (int i = 0; i < totalMultDivReservationStations; i++)
-		{
-			y++;
-			gotoxy(19, y);
-			cout << std::right << setw(7) << multDivReservationStations[i].name << " |" << setw(5) << (multDivReservationStations[i].isBusy == true ? "yes" : "no") << "|" << setw(7) << multDivReservationStations[i].instructionType << "|" << setw(8) << multDivReservationStations[i].Vj << "|" << setw(8) << multDivReservationStations[i].Vk << "|" << setw(8) << multDivReservationStations[i].Qj << "|" << setw(8) << multDivReservationStations[i].Qk << "|";
 		
-			if (multDivReservationStations[i].instruction != nullptr)
-			{
-				cout << setw(3) << multDivReservationStations[i].instruction->instructionStatus.executionCyclesRemaining;
-			}
-		
-			y++;
-			gotoxy(19 + 7 + 1, y);
-			cout << "|_____|_______|________|________|________|________|";
-		}
-
-		y+=3;
-		int x = 19;
-	
-		
-		for (int i = 0; i < totalRegisters; i++)
-		{
-			gotoxy(x, y);
-		   cout <<std::right<<setw(5)<< registerStatus[i].registerName ;
-			
-		   gotoxy(x+1, y + 1);
-		
-		   cout << "________";
-		    gotoxy(x, y + 2);
-			cout << "|" << setw(5) << registerStatus[i].writingUnit ;
-	
-			gotoxy(x, y + 3);
-			cout << "|________";
-			x += 5 + registerStatus[i].registerName.length() + 1;
-
-	
-		}
-		gotoxy(x, y+2);
-		cout << "|";
-		gotoxy(x , y + 3);
-		cout << "|";
-		
-		cout << endl << endl;
-		cout << "What happend: " << endl << reason;
-
 	}
 	Tomasulo()
 	{
@@ -1331,34 +1217,15 @@ struct Tomasulo
 };
 int main(int argc, char* argv[])
 {
-	
-	CONSOLE_FONT_INFOEX cfi;
-	cfi.cbSize = sizeof(cfi);
-	cfi.nFont = 0;
-	cfi.dwFontSize.X = 0;                   // Width of each character in the font
-	cfi.dwFontSize.Y = 18;                  // Height
-	cfi.FontFamily = FF_DONTCARE;
-	cfi.FontWeight = FW_NORMAL;
-	wcscpy_s(cfi.FaceName, L"Consolas"); // Choose your font
-	SetCurrentConsoleFontEx(GetStdHandle(STD_OUTPUT_HANDLE), FALSE, &cfi);
 
- 
-
-
-	SetConsoleDisplayMode(GetStdHandle(STD_OUTPUT_HANDLE), CONSOLE_FULLSCREEN_MODE, 0);
-	COORD newSize = { 1000, 1000 };
-	//SetConsoleScreenBufferSize(GetStdHandle(STD_OUTPUT_HANDLE), newSize);
-
-	HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
-	SetConsoleTextAttribute(hStdOut, BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_RED | BACKGROUND_INTENSITY);
 
 	system("cls");
 
 	Tomasulo algorithm;
-	
+
 
 	algorithm.loadDataFromFile("source.txt");
-	
+
 	algorithm.Simulate();
 
 	system("pause");
