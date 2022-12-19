@@ -5,10 +5,15 @@ using namespace std;
 #include <string>
 #include <fstream>
 #include "definitions.h"
+#include <bitset>
 
+string decimal_to_binary(int number);
+int nor_operation(string bin1, string bin2);
+int twos_complement(string bin);
 
-struct Tomasulo
+class Tomasulo
 {
+public:
 	int current_Cycle_Number;
 	LoadStoreBuffer* Load_ReservationStations;
 	LoadStoreBuffer* Store_ReservationStations;
@@ -16,6 +21,8 @@ struct Tomasulo
 	ReservationStation* MultDiv_ReservationStations;
 	ReservationStation* Neg_ReservationStations;
 	ReservationStation* Nor_ReservationStations;
+	ReservationStation* Beq_ReservationStations;
+	ReservationStation* Jal_ReservationStations;
 	RegisterStatus* registerStatus;
 
 
@@ -25,10 +32,14 @@ struct Tomasulo
 	int totalMultDiv_ReservationStations;
 	int totalNeg_ReservationStations;
 	int totalNor_ReservationStations;
+	int totalBeq_Reservation_Stations;
+	int totalJal_Reservation_Stations;
 
 	int totalRegisters;
 	Instruction* instructions;
+	DataMemory* data_memory;
 	int totalInstructions;
+	int totalMemoryLocations;
 
 	int totalLoadCycles;
 	int totalStoreCycles;
@@ -36,14 +47,55 @@ struct Tomasulo
 	int totalMultCylcles;
 	int totalDivCycles;
 	int totalNegCycles;
+	int totalBeqCycles;
+	int totalJalCycles;
 	int totalNorCycles;
+	void load_data(string fileName)
+	{
 
+		if (fileName == "")
+		{
+			fileName = "data.txt";
+		}
+
+		ifstream read;
+		read.open(fileName);
+		if (read.is_open() == false)
+		{
+			cout << "File could not open!" << endl;
+			system("pause");
+			exit(EXIT_FAILURE);
+		}
+
+		string data;
+
+		while (read.peek() != '#')
+			read.ignore();
+
+		getline(read, data);
+		read >> this->totalMemoryLocations;
+		this->data_memory = new DataMemory[this->totalMemoryLocations];
+
+		for (int i = 0; i < totalMemoryLocations; i++)
+		{
+			string data_memory;
+			read >> data_memory;
+			if (_strcmpi(data_memory.c_str(), "Data") == 0)
+			{
+				read >> this->data_memory[i].Data_Memory_Location;
+				read >> this->data_memory[i].Memory_Value;
+			}
+		}
+
+
+
+	}
 	void load(string fileName)
 	{
 
 		if (fileName == "")
 		{
-			fileName = "source1.txt";
+			fileName = "data_file.txt";
 		}
 
 		ifstream read;
@@ -65,11 +117,13 @@ struct Tomasulo
 			addSUBDone = false,
 			MULTDivDone = false,
 			NEGDone = false,
-			NORDone = false;
+			NORDone = false,
+			JALDone = false,
+			BEQDone = false;
 
 		bool exit_ = false;
 
-		for (int i = 0; i < 6; i++)
+		for (int i = 0; i < 8; i++)
 		{
 			read >> data;
 			if (_strcmpi(data.c_str(), "Add_Sub_Reservation_Stations") == 0)
@@ -77,7 +131,11 @@ struct Tomasulo
 				addSUBDone = true;
 				read >> this->totalAddSub_ReservationStations;
 			}
-
+			if (_strcmpi(data.c_str(), "Jal_Reservation_Stations") == 0)
+			{
+				JALDone = true;
+				read >> this->totalJal_Reservation_Stations;
+			}
 			else if (_strcmpi(data.c_str(), "Mul_Div_Reservation_Stations") == 0)
 			{
 				MULTDivDone = true;
@@ -107,6 +165,11 @@ struct Tomasulo
 				NORDone = true;
 				read >> this->totalNor_ReservationStations;
 			}
+			else if (_strcmpi(data.c_str(), "Beq_Reservation_Stations") == 0)
+			{
+				BEQDone = true;
+				read >> this->totalBeq_Reservation_Stations;
+			}
 
 		}
 		if (!storeDone)
@@ -125,13 +188,11 @@ struct Tomasulo
 			cout << "-> Information about the number of Mult Div Reservation Stations missing" << endl;
 			exit_ = true;
 		}
-
 		else if (!addSUBDone)
 		{
 			cout << "-> Information about the number of Add Sub Reservation Stations missing." << endl;
 			exit_ = true;
 		}
-
 		else if (!NEGDone)
 		{
 			cout << "-> Information about the number of Neg Reservation Stations missing." << endl;
@@ -142,7 +203,16 @@ struct Tomasulo
 			cout << "-> Information about the number of Nor Reservation Stations missing." << endl;
 			exit_ = true;
 		}
-
+		else if (!BEQDone)
+		{
+			cout << "-> Information about the number of Beq Reservation Stations missing." << endl;
+			exit_ = true;
+		}
+		else if (!JALDone)
+		{
+			cout << "-> Information about the number of JAL Reservation Stations missing." << endl;
+			exit_ = true;
+		}
 
 		bool multCyclesDone = false,
 			divCyclesDones = false,
@@ -150,13 +220,14 @@ struct Tomasulo
 			NegCyclesDone = false,
 			NorCyclesDone = false,
 			loadCyclesDone = false,
-			StoreCyclesDone = false;
-
+			BeqCyclesDone = false,
+			StoreCyclesDone = false,
+		    JalCyclesDone = false;
 		while (read.peek() != '#')
 			read.ignore();
 
 		getline(read, data); 
-		for (int i = 0; i < 7; i++)
+		for (int i = 0; i < 9; i++)
 		{
 			read >> data;
 			if (_strcmpi(data.c_str(), "Add_Sub_Cycles") == 0)
@@ -196,8 +267,16 @@ struct Tomasulo
 				read >> this->totalNorCycles;
 				NorCyclesDone = true;
 			}
-
-
+			else if (_strcmpi(data.c_str(), "Beq_Cycles") == 0)
+			{
+				read >> this->totalBeqCycles;
+				BeqCyclesDone = true;
+			}
+			else if (_strcmpi(data.c_str(), "Jal_Cycles") == 0)
+			{
+				read >> this->totalJalCycles;
+				JalCyclesDone = true;
+			}
 		}
 
 		if (!addSubCyclesDone)
@@ -229,6 +308,16 @@ struct Tomasulo
 		else if (!NegCyclesDone)
 		{
 			cout << "-> Information about the number of neg cycles missing." << endl;
+			exit_ = true;
+		}
+		else if (!BeqCyclesDone)
+		{
+			cout << "-> Information about the number of Beq cycles missing." << endl;
+			exit_ = true;
+		}
+		else if (!JalCyclesDone)
+		{
+			cout << "-> Information about the number of Jal cycles missing." << endl;
 			exit_ = true;
 		}
 		else if (!NorCyclesDone)
@@ -289,6 +378,16 @@ struct Tomasulo
 			this->Neg_ReservationStations[i].name.append(num);
 		}
 
+		this->Beq_ReservationStations = new ReservationStation[this->totalBeq_Reservation_Stations];
+		for (int i = 0; i < this->totalBeq_Reservation_Stations; i++)
+		{
+			char num[10];
+			_itoa_s(i, num, 10);
+			this->Beq_ReservationStations[i].name = ReservationStationType::BEQ;
+			this->Beq_ReservationStations[i].name.append(num);
+		}
+
+
 		this->Nor_ReservationStations = new ReservationStation[this->totalNor_ReservationStations];
 		for (int i = 0; i < this->totalNor_ReservationStations; i++)
 		{
@@ -296,6 +395,15 @@ struct Tomasulo
 			_itoa_s(i, num, 10);
 			this->Nor_ReservationStations[i].name = ReservationStationType::NOR;
 			this->Nor_ReservationStations[i].name.append(num);
+		}
+
+		this->Jal_ReservationStations = new ReservationStation[this->totalJal_Reservation_Stations];
+		for (int i = 0; i < this->totalJal_Reservation_Stations; i++)
+		{
+			char num[10];
+			_itoa_s(i, num, 10);
+			this->Jal_ReservationStations[i].name = ReservationStationType::JAL;
+			this->Jal_ReservationStations[i].name.append(num);
 		}
 
 
@@ -307,13 +415,23 @@ struct Tomasulo
 		read >> this->totalRegisters;
 		this->registerStatus = new RegisterStatus[totalRegisters];
 
-		for (int i = 0; i < totalRegisters; i++)
+		for (int i = 0; i < 1; i++)
 		{
+			this->registerStatus[i].Register_Value = 0;
 			this->registerStatus[i].Register_Name = "R";
 			char num[10];
 			_itoa_s(i, num, 10);
 			this->registerStatus[i].Register_Name.append(num);
 		}
+		for (int i = 1; i < totalRegisters; i++)
+		{
+			this->registerStatus[i].Register_Value = 5;
+			this->registerStatus[i].Register_Name = "R";
+			char num[10];
+			_itoa_s(i, num, 10);
+			this->registerStatus[i].Register_Name.append(num);
+		}
+		
 
 
 		while (read.peek() != '#')
@@ -382,7 +500,6 @@ struct Tomasulo
 				this->instructions[i].Instruction_Type = Instruction_Type::NEG;
 				read >> this->instructions[i].Rd;
 				read >> this->instructions[i].Rs;
-				read >> this->instructions[i].Rt;
 			}
 
 			else if (_strcmpi(instruction.c_str(), Instruction_Type::NOR.c_str()) == 0)
@@ -392,7 +509,22 @@ struct Tomasulo
 				read >> this->instructions[i].Rs;
 				read >> this->instructions[i].Rt;
 			}
-
+			else if (_strcmpi(instruction.c_str(), Instruction_Type::BEQ.c_str()) == 0)
+			{
+				this->instructions[i].Instruction_Type = Instruction_Type::BEQ;
+				read >> this->instructions[i].Rd;
+				read >> this->instructions[i].Rs;
+				read >> this->instructions[i].Immediate_Offset;
+			}
+			else if (_strcmpi(instruction.c_str(), Instruction_Type::JAL.c_str()) == 0)
+			{
+				this->instructions[i].Instruction_Type = Instruction_Type::JAL;
+				read >> this->instructions[i].Immediate_Offset;
+			}
+			else if (_strcmpi(instruction.c_str(), Instruction_Type::RETURN.c_str()) == 0)
+			{
+				this->instructions[i].Instruction_Type = Instruction_Type::RETURN;
+			}
 		}
 
 
@@ -409,7 +541,16 @@ struct Tomasulo
 
 		return -1;
 	}
+	int find_free_RS_Jal()
+	{
+		for (int i = 0; i < totalJal_Reservation_Stations; i++)
+		{
+			if (Jal_ReservationStations[i].isBusy == false)
+				return i;
+		}
 
+		return -1;
+	}
 	int find_free_RS_AddSub()
 	{
 		for (int i = 0; i < totalAddSub_ReservationStations; i++)
@@ -470,7 +611,18 @@ struct Tomasulo
 		return -1;
 
 	}
+	int find_free_RS_Beq()
+	{
+		for (int i = 0; i < totalBeq_Reservation_Stations; i++)
+		{
+			if (Beq_ReservationStations[i].isBusy == false)
+				return i;
 
+		}
+
+		return -1;
+
+	}
 	void output_result(string val, string name)
 	{
 		for (int i = 0; i < totalNeg_ReservationStations; i++)
@@ -482,11 +634,37 @@ struct Tomasulo
 
 			}
 
-			if (this->Neg_ReservationStations[i].Qk == name)
+		}
+
+		for (int i = 0; i < totalBeq_Reservation_Stations; i++)
+		{
+			if (this->Beq_ReservationStations[i].Qj == name)
 			{
-				this->Neg_ReservationStations[i].Qk = "";
-				this->Neg_ReservationStations[i].Vk = val;
+				this->Beq_ReservationStations[i].Qj = "";
+				this->Beq_ReservationStations[i].Vj = val;
+
 			}
+			if (this->Beq_ReservationStations[i].Qk == name)
+			{
+				this->Beq_ReservationStations[i].Qk = "";
+				this->Beq_ReservationStations[i].Vk = val;
+			}
+
+		}
+		for (int i = 0; i < totalJal_Reservation_Stations; i++)
+		{
+			if (this->Jal_ReservationStations[i].Qj == name)
+			{
+				this->Jal_ReservationStations[i].Qj = "";
+				this->Jal_ReservationStations[i].Vj = val;
+
+			}
+			if (this->Jal_ReservationStations[i].Qk == name)
+			{
+				this->Jal_ReservationStations[i].Qk = "";
+				this->Jal_ReservationStations[i].Vk = val;
+			}
+
 		}
 
 		for (int i = 0; i < totalNor_ReservationStations; i++)
@@ -643,15 +821,12 @@ struct Tomasulo
 
 				if (bufferNo == -1)
 				{
-
-					
+				
 					return -1;
 				}
 
 				else
 				{
-
-				
 
 
 					this->instructions[currentInstruction_Number_ToBeIssued].Instruction_Status.executionCyclesRemaining = this->totalAddSubCycles;
@@ -661,10 +836,13 @@ struct Tomasulo
 					this->instructions[currentInstruction_Number_ToBeIssued].Instruction_Status.Issue_Instruction = current_Cycle_Number;
 
 
+					//checking RAW hazard 
+					//RS
 					int regNumber = atoi(&this->instructions[currentInstruction_Number_ToBeIssued].Rs.c_str()[1]);
 
 					this->AddSub_ReservationStations[bufferNo].Qj = this->registerStatus[regNumber].writing_reg;
 
+					//Rt
 					regNumber = atoi(&this->instructions[currentInstruction_Number_ToBeIssued].Rt.c_str()[1]);
 					this->AddSub_ReservationStations[bufferNo].Qk = this->registerStatus[regNumber].writing_reg;
 
@@ -678,12 +856,16 @@ struct Tomasulo
 						this->AddSub_ReservationStations[bufferNo].Vk = "R(" + this->instructions[currentInstruction_Number_ToBeIssued].Rt + ")";
 					}
 
+
+					//setting register status
 					regNumber = atoi(&this->instructions[currentInstruction_Number_ToBeIssued].Rd.c_str()[1]);
 					this->registerStatus[regNumber].writing_reg = this->AddSub_ReservationStations[bufferNo].name;
 
 
 				}
 			}
+		
+
 			else if (instructions[currentInstruction_Number_ToBeIssued].Instruction_Type == Instruction_Type::NEG)
 			{
 			int bufferNo = find_free_RS_Neg();
@@ -710,18 +892,19 @@ struct Tomasulo
 
 				this->Neg_ReservationStations[bufferNo].Qj = this->registerStatus[Register_Number].writing_reg;
 
-				Register_Number = atoi(&this->instructions[currentInstruction_Number_ToBeIssued].Rt.c_str()[1]);
-				this->Neg_ReservationStations[bufferNo].Qk = this->registerStatus[Register_Number].writing_reg;
 
 				if (this->Neg_ReservationStations[bufferNo].Qj == "")
 				{
-					this->Neg_ReservationStations[bufferNo].Vj = "R(" + this->instructions[currentInstruction_Number_ToBeIssued].Rs + ")";
+					if (this->instructions[currentInstruction_Number_ToBeIssued].Rs.c_str()[0] == 'R') {
+						this->Neg_ReservationStations[bufferNo].Vj = to_string(registerStatus[atoi(&this->instructions[currentInstruction_Number_ToBeIssued].Rs.c_str()[1])].Register_Value);
+					}
+					else {
+						this->Neg_ReservationStations[bufferNo].Vj = this->instructions[currentInstruction_Number_ToBeIssued].Rs;
+					}
+
+
 				}
 
-				if (this->Neg_ReservationStations[bufferNo].Qk == "")
-				{
-					this->Neg_ReservationStations[bufferNo].Vk = "R(" + this->instructions[currentInstruction_Number_ToBeIssued].Rt + ")";
-				}
 
 
 				Register_Number = atoi(&this->instructions[currentInstruction_Number_ToBeIssued].Rd.c_str()[1]);
@@ -730,6 +913,7 @@ struct Tomasulo
 
 			}
 			}
+
 			else if (instructions[currentInstruction_Number_ToBeIssued].Instruction_Type == Instruction_Type::NOR)
 			{
 			int bufferNo = find_free_RS_Nor();
@@ -751,12 +935,15 @@ struct Tomasulo
 				this->instructions[currentInstruction_Number_ToBeIssued].Instruction_Status.Issue_Instruction = current_Cycle_Number;
 
 
-				int Register_Number = atoi(&this->instructions[currentInstruction_Number_ToBeIssued].Rs.c_str()[1]);
+				//checking RAW hazard 
+				//RS
+				int regNumber = atoi(&this->instructions[currentInstruction_Number_ToBeIssued].Rs.c_str()[1]);
 
-				this->Nor_ReservationStations[bufferNo].Qj = this->registerStatus[Register_Number].writing_reg;
+				this->Nor_ReservationStations[bufferNo].Qj = this->registerStatus[regNumber].writing_reg;
 
-				Register_Number = atoi(&this->instructions[currentInstruction_Number_ToBeIssued].Rt.c_str()[1]);
-				this->Nor_ReservationStations[bufferNo].Qk = this->registerStatus[Register_Number].writing_reg;
+				//Rt
+				regNumber = atoi(&this->instructions[currentInstruction_Number_ToBeIssued].Rt.c_str()[1]);
+				this->Nor_ReservationStations[bufferNo].Qk = this->registerStatus[regNumber].writing_reg;
 
 				if (this->Nor_ReservationStations[bufferNo].Qj == "")
 				{
@@ -768,8 +955,80 @@ struct Tomasulo
 					this->Nor_ReservationStations[bufferNo].Vk = "R(" + this->instructions[currentInstruction_Number_ToBeIssued].Rt + ")";
 				}
 
-				Register_Number = atoi(&this->instructions[currentInstruction_Number_ToBeIssued].Rd.c_str()[1]);
-				this->registerStatus[Register_Number].writing_reg = this->Nor_ReservationStations[bufferNo].name;
+
+				//setting register status
+				regNumber = atoi(&this->instructions[currentInstruction_Number_ToBeIssued].Rd.c_str()[1]);
+				this->registerStatus[regNumber].writing_reg = this->Nor_ReservationStations[bufferNo].name;
+
+
+			}
+			}
+			else if (instructions[currentInstruction_Number_ToBeIssued].Instruction_Type == Instruction_Type::BEQ)
+			{
+			int bufferNo = find_free_RS_Beq();
+
+
+			if (bufferNo == -1)
+			{
+
+				return -1;
+			}
+
+			else
+			{
+
+				this->instructions[currentInstruction_Number_ToBeIssued].Instruction_Status.executionCyclesRemaining = this->totalBeqCycles;
+				this->Beq_ReservationStations[bufferNo].Instruction_Type = this->instructions[currentInstruction_Number_ToBeIssued].Instruction_Type;
+				this->Beq_ReservationStations[bufferNo].instruction = &this->instructions[currentInstruction_Number_ToBeIssued];
+				this->Beq_ReservationStations[bufferNo].isBusy = true;
+				this->instructions[currentInstruction_Number_ToBeIssued].Instruction_Status.Issue_Instruction = current_Cycle_Number;
+
+
+				//checking RAW hazard 
+				//RS
+				int regNumber = atoi(&this->instructions[currentInstruction_Number_ToBeIssued].Rd.c_str()[1]);
+
+				this->Beq_ReservationStations[bufferNo].Qj = this->registerStatus[regNumber].writing_reg;
+
+				//Rt
+				regNumber = atoi(&this->instructions[currentInstruction_Number_ToBeIssued].Rs.c_str()[1]);
+				this->Beq_ReservationStations[bufferNo].Qk = this->registerStatus[regNumber].writing_reg;
+
+				if (this->Beq_ReservationStations[bufferNo].Qj == "")
+				{
+					this->Beq_ReservationStations[bufferNo].Vj = "R(" + this->instructions[currentInstruction_Number_ToBeIssued].Rd + ")";
+				}
+
+				if (this->Beq_ReservationStations[bufferNo].Qk == "")
+				{
+					this->Beq_ReservationStations[bufferNo].Vk = "R(" + this->instructions[currentInstruction_Number_ToBeIssued].Rs + ")";
+				}
+
+
+
+
+			}
+			}
+			else if (instructions[currentInstruction_Number_ToBeIssued].Instruction_Type == Instruction_Type::JAL || instructions[currentInstruction_Number_ToBeIssued].Instruction_Type == Instruction_Type::RETURN)
+			{
+			int bufferNo = find_free_RS_Jal();
+
+
+			if (bufferNo == -1)
+			{
+
+				return -1;
+			}
+
+			else
+			{
+
+				this->instructions[currentInstruction_Number_ToBeIssued].Instruction_Status.executionCyclesRemaining = this->totalJalCycles;
+				this->Jal_ReservationStations[bufferNo].Instruction_Type = this->instructions[currentInstruction_Number_ToBeIssued].Instruction_Type;
+				this->Jal_ReservationStations[bufferNo].instruction = &this->instructions[currentInstruction_Number_ToBeIssued];
+				this->Jal_ReservationStations[bufferNo].isBusy = true;
+				this->instructions[currentInstruction_Number_ToBeIssued].Instruction_Status.Issue_Instruction = current_Cycle_Number;
+
 
 
 			}
@@ -835,9 +1094,8 @@ struct Tomasulo
 		return 0;
 	}
 
-	void Write_Back()
+	void Write_Back(int& currentInstruction_Number_ToBeIssued)
 	{
-
 
 		for (int i = 0; i < totalLoad_ReservationStations; i++)
 		{
@@ -856,6 +1114,31 @@ struct Tomasulo
 			int regNum = atoi(&this->Load_ReservationStations[i].instruction->Rt.c_str()[1]);
 			if (this->registerStatus[regNum].writing_reg == this->Load_ReservationStations[i].name)
 				this->registerStatus[regNum].writing_reg = "";
+
+			///writing into  register
+			int imm, rs1;
+
+			imm = Load_ReservationStations->instruction[i].Immediate_Offset;
+
+			if (Load_ReservationStations[i].instruction->Rs.c_str()[0] == 'R') {
+				rs1 = registerStatus[atoi(&Load_ReservationStations[i].instruction->Rs.c_str()[1])].Register_Value;
+			}
+			int regnum_rd = atoi(&this->Load_ReservationStations[i].instruction->Rt.c_str()[1]);
+			//result written into Rd
+			int mem_loc;
+			for (int i = 0; i < totalMemoryLocations; i++)
+			{
+				if (stoi(this->data_memory[i].Data_Memory_Location) == imm + rs1) {
+					mem_loc = i;
+				}
+			}
+			
+			if (registerStatus[regnum_rd].Register_Name != "R0")
+				registerStatus[regnum_rd].Register_Value = this->data_memory[mem_loc].Memory_Value;
+			else
+				registerStatus[regnum_rd].Register_Value = 0;
+
+			/// 
 
 			this->Load_ReservationStations[i].isBusy = false;
 			this->Load_ReservationStations[i].address = "";
@@ -881,6 +1164,30 @@ struct Tomasulo
 
 			if (this->Store_ReservationStations[i].instruction->Instruction_Status.Execution_Complete_Time == current_Cycle_Number)
 				continue; 
+			///writing into  register
+			int imm, rs1, rs2;
+
+			imm = Store_ReservationStations->instruction[i].Immediate_Offset;
+			if (Store_ReservationStations[i].instruction->Rs.c_str()[0] == 'R') {
+				rs1 = registerStatus[atoi(&Store_ReservationStations[i].instruction->Rt.c_str()[1])].Register_Value;
+			}
+
+			rs2 = registerStatus[atoi(&Store_ReservationStations[i].instruction->Rs.c_str()[1])].Register_Value;
+			//result written into Rd
+			int mem_loc;
+			bool mem_loc_found=false;
+			for (int i = 0; i < totalMemoryLocations; i++)
+			{
+				if (stoi(this->data_memory[i].Data_Memory_Location) == imm + rs2) {
+					mem_loc = i;
+					mem_loc_found = true;
+				}
+			}
+			if (mem_loc_found) {
+				this->data_memory[mem_loc].Memory_Value = rs1;
+			}
+
+			/// 
 			this->Store_ReservationStations[i].instruction->Instruction_Status.Write_Back = current_Cycle_Number;
 			this->Store_ReservationStations[i].isBusy = false;
 			this->Store_ReservationStations[i].address = "";
@@ -907,6 +1214,30 @@ struct Tomasulo
 			if (this->registerStatus[regNum].writing_reg == this->AddSub_ReservationStations[i].name)
 				this->registerStatus[regNum].writing_reg = "";
 
+			///writing into  register
+			int rs1, rs2;
+			if (AddSub_ReservationStations[i].instruction->Rs.c_str()[0] == 'R') {
+				rs1 = registerStatus[atoi(&AddSub_ReservationStations[i].instruction->Rs.c_str()[1])].Register_Value;
+			}
+			else {
+				rs1 = stoi(AddSub_ReservationStations->instruction[i].Rs);
+			}
+
+			if (AddSub_ReservationStations[i].instruction->Rt.c_str()[0] == 'R') {
+				rs2 = registerStatus[atoi(&AddSub_ReservationStations[i].instruction->Rt.c_str()[1])].Register_Value;
+			}
+			else {
+				rs2 = stoi(AddSub_ReservationStations->instruction[i].Rt);
+			}
+
+			int regnum_rd = atoi(&this->AddSub_ReservationStations[i].instruction->Rd.c_str()[1]);
+			//result written into Rd
+			if (registerStatus[regnum_rd].Register_Name != "R0")
+				registerStatus[regnum_rd].Register_Value = rs1 + rs2;
+			else
+				registerStatus[regnum_rd].Register_Value = 0;
+			
+			/// 
 			this->AddSub_ReservationStations[i].isBusy = false;
 			this->AddSub_ReservationStations[i].Instruction_Type = "";
 			this->AddSub_ReservationStations[i].Qj = "";
@@ -923,6 +1254,114 @@ struct Tomasulo
 			output_result(val, this->AddSub_ReservationStations[i].name);
 			num++;
 		}
+
+		for (int i = 0; i < totalBeq_Reservation_Stations; i++)
+		{
+			int static num = 1;
+
+			if (this->Beq_ReservationStations[i].isBusy == false)
+				continue;
+
+			if (this->Beq_ReservationStations[i].instruction->Instruction_Status.executionCyclesRemaining != 0)
+				continue;
+
+			if (this->Beq_ReservationStations[i].instruction->Instruction_Status.Execution_Complete_Time == current_Cycle_Number)
+				continue;
+
+			this->Beq_ReservationStations[i].instruction->Instruction_Status.Write_Back = current_Cycle_Number;
+
+			int regNum = atoi(&this->Beq_ReservationStations[i].instruction->Rd.c_str()[1]);
+			if (this->registerStatus[regNum].writing_reg == this->Beq_ReservationStations[i].name)
+				this->registerStatus[regNum].writing_reg = "";
+
+			///writing into  register
+			int rs1, rs2;
+			if (Beq_ReservationStations[i].instruction->Rd.c_str()[0] == 'R') {
+				rs1 = registerStatus[atoi(&Beq_ReservationStations[i].instruction->Rd.c_str()[1])].Register_Value;
+			}
+			else {
+				rs1 = stoi(Beq_ReservationStations->instruction[i].Rd);
+			}
+
+			if (Beq_ReservationStations[i].instruction->Rs.c_str()[0] == 'R') {
+				rs2 = registerStatus[atoi(&Beq_ReservationStations[i].instruction->Rs.c_str()[1])].Register_Value;
+			}
+			else {
+				rs2 = stoi(Beq_ReservationStations->instruction[i].Rs);
+			}
+
+
+			if (rs1 == rs2) {
+				currentInstruction_Number_ToBeIssued = currentInstruction_Number_ToBeIssued +  1 + Beq_ReservationStations[i].instruction->Immediate_Offset;
+				
+				cout << currentInstruction_Number_ToBeIssued<<"\n";
+			}
+
+			/// 
+			this->Beq_ReservationStations[i].isBusy = false;
+			this->Beq_ReservationStations[i].Instruction_Type = "";
+			this->Beq_ReservationStations[i].Qj = "";
+			this->Beq_ReservationStations[i].Qk = "";
+			this->Beq_ReservationStations[i].Vj = "";
+			this->Beq_ReservationStations[i].Vk = "";
+			this->Beq_ReservationStations[i].instruction = nullptr;
+
+			char numChar[10];
+			_itoa_s(num, numChar, 10);
+			string val = "B";
+			val.append(numChar);
+
+			output_result(val, this->Beq_ReservationStations[i].name);
+			num++;
+		}
+
+
+		for (int i = 0; i < totalJal_Reservation_Stations; i++)
+		{
+			int static num = 1;
+
+			if (this->Jal_ReservationStations[i].isBusy == false)
+				continue;
+
+			if (this->Jal_ReservationStations[i].instruction->Instruction_Status.executionCyclesRemaining != 0)
+				continue;
+
+			if (this->Jal_ReservationStations[i].instruction->Instruction_Status.Execution_Complete_Time == current_Cycle_Number)
+				continue;
+
+			this->Jal_ReservationStations[i].instruction->Instruction_Status.Write_Back = current_Cycle_Number;
+
+			int rs1;
+
+			if (Jal_ReservationStations[i].instruction->Instruction_Type=="JAL") {
+				registerStatus[1].Register_Value = currentInstruction_Number_ToBeIssued;
+				currentInstruction_Number_ToBeIssued = currentInstruction_Number_ToBeIssued + Jal_ReservationStations[i].instruction->Immediate_Offset;
+				cout << currentInstruction_Number_ToBeIssued << "\n";
+			}
+			if (Jal_ReservationStations[i].instruction->Instruction_Type == "RETURN") {
+				currentInstruction_Number_ToBeIssued = registerStatus[1].Register_Value;
+
+				cout << currentInstruction_Number_ToBeIssued << "\n";
+			}
+
+			/// 
+			this->Jal_ReservationStations[i].isBusy = false;
+			this->Jal_ReservationStations[i].Instruction_Type = "";
+			this->Jal_ReservationStations[i].Qj = "";
+			this->Jal_ReservationStations[i].Qk = "";
+			this->Jal_ReservationStations[i].Vj = "";
+			this->Jal_ReservationStations[i].Vk = "";
+			this->Jal_ReservationStations[i].instruction = nullptr;
+
+			char numChar[10];
+			_itoa_s(num, numChar, 10);
+			string val = "J";
+			val.append(numChar);
+
+			output_result(val, this->Jal_ReservationStations[i].name);
+			num++;
+		}
+
 
 		for (int i = 0; i < totalNeg_ReservationStations; i++)
 		{
@@ -943,23 +1382,43 @@ struct Tomasulo
 			if (this->registerStatus[regNum].writing_reg == this->Neg_ReservationStations[i].name)
 				this->registerStatus[regNum].writing_reg = "";
 
+			///writing into  register
+			int rs1;
+			if (Neg_ReservationStations[i].instruction->Rs.c_str()[0] == 'R') {
+				rs1 = registerStatus[atoi(&Neg_ReservationStations[i].instruction->Rs.c_str()[1])].Register_Value;
+			}
+			else {
+				rs1 = stoi(Neg_ReservationStations->instruction[i].Rs);
+			}
+
+
+			int regnum_rd = atoi(&this->Neg_ReservationStations[i].instruction->Rd.c_str()[1]);
+			//result written into Rd
+			string rs1_bin = decimal_to_binary(rs1);
+			
+			if (registerStatus[regnum_rd].Register_Name != "R0")
+				registerStatus[regnum_rd].Register_Value = twos_complement(rs1_bin);
+			else
+				registerStatus[regnum_rd].Register_Value = 0;
+			
+			/// 
+
 			this->Neg_ReservationStations[i].isBusy = false;
 			this->Neg_ReservationStations[i].Instruction_Type = "";
 			this->Neg_ReservationStations[i].Qj = "";
-			this->Neg_ReservationStations[i].Qk = "";
 			this->Neg_ReservationStations[i].Vj = "";
-			this->Neg_ReservationStations[i].Vk = "";
 			this->Neg_ReservationStations[i].instruction = nullptr;
 
 			char numChar[10];
 			_itoa_s(num, numChar, 10);
-			string val = "V";
+			string val = "E";
 			val.append(numChar);
 
 			output_result(val, this->Neg_ReservationStations[i].name);
 			num++;
 		}
 		
+
 		for (int i = 0; i < totalNor_ReservationStations; i++)
 		{
 			int static num = 1;
@@ -978,7 +1437,31 @@ struct Tomasulo
 			int regNum = atoi(&this->Nor_ReservationStations[i].instruction->Rd.c_str()[1]);
 			if (this->registerStatus[regNum].writing_reg == this->Nor_ReservationStations[i].name)
 				this->registerStatus[regNum].writing_reg = "";
+			///writing into  register
+			int rs1, rs2;
+			if (Nor_ReservationStations[i].instruction->Rs.c_str()[0] == 'R') {
+				rs1 = registerStatus[atoi(&Nor_ReservationStations[i].instruction->Rs.c_str()[1])].Register_Value;
+			}
+			else {
+				rs1 = stoi(Nor_ReservationStations->instruction[i].Rs);
+			}
 
+			if (Nor_ReservationStations[i].instruction->Rt.c_str()[0] == 'R') {
+				rs2 = registerStatus[atoi(&Nor_ReservationStations[i].instruction->Rt.c_str()[1])].Register_Value;
+			}
+			else {
+				rs2 = stoi(Nor_ReservationStations->instruction[i].Rt);
+			}
+
+			int regnum_rd = atoi(&this->Nor_ReservationStations[i].instruction->Rd.c_str()[1]);
+			//result written into Rd
+			string rs1_bin = decimal_to_binary(rs1);
+			string rs2_bin = decimal_to_binary(rs2);
+			if (registerStatus[regnum_rd].Register_Name != "R0")
+				registerStatus[regnum_rd].Register_Value = nor_operation(rs1_bin, rs2_bin);
+			else
+				registerStatus[regnum_rd].Register_Value = 0;
+			/// 
 			this->Nor_ReservationStations[i].isBusy = false;
 			this->Nor_ReservationStations[i].Instruction_Type = "";
 			this->Nor_ReservationStations[i].Qj = "";
@@ -989,7 +1472,7 @@ struct Tomasulo
 
 			char numChar[10];
 			_itoa_s(num, numChar, 10);
-			string val = "V";
+			string val = "N";
 			val.append(numChar);
 
 			output_result(val, this->Nor_ReservationStations[i].name);
@@ -1015,6 +1498,30 @@ struct Tomasulo
 			if (this->registerStatus[regNum].writing_reg == this->MultDiv_ReservationStations[i].name)
 				this->registerStatus[regNum].writing_reg = "";
 
+			///writing into  register
+			int rs1, rs2;
+			if (MultDiv_ReservationStations[i].instruction->Rs.c_str()[0] == 'R') {
+				rs1 = registerStatus[atoi(&MultDiv_ReservationStations[i].instruction->Rs.c_str()[1])].Register_Value;
+			}
+			else {
+				rs1 = stoi(MultDiv_ReservationStations->instruction[i].Rs);
+			}
+
+			if (MultDiv_ReservationStations[i].instruction->Rt.c_str()[0] == 'R') {
+				rs2 = registerStatus[atoi(&MultDiv_ReservationStations[i].instruction->Rt.c_str()[1])].Register_Value;
+			}
+			else {
+				rs2 = stoi(MultDiv_ReservationStations->instruction[i].Rt);
+			}
+
+			int regnum_rd = atoi(&this->MultDiv_ReservationStations[i].instruction->Rd.c_str()[1]);
+			//result written into Rd
+			if(registerStatus[regnum_rd].Register_Name!="R0")
+			registerStatus[regnum_rd].Register_Value = rs1 * rs2;
+			else
+				registerStatus[regnum_rd].Register_Value = 0;
+			/// 
+
 			this->MultDiv_ReservationStations[i].isBusy = false;
 			this->MultDiv_ReservationStations[i].Instruction_Type = "";
 			this->MultDiv_ReservationStations[i].Qj = "";
@@ -1025,7 +1532,7 @@ struct Tomasulo
 
 			char numChar[10];
 			_itoa_s(num, numChar, 10);
-			string val = "V";
+			string val = "D";
 			val.append(numChar);
 
 			output_result(val, this->MultDiv_ReservationStations[i].name);
@@ -1089,26 +1596,21 @@ struct Tomasulo
 				continue;
 
 			if (this->Store_ReservationStations[i].fu != "")
-				continue;//exeuction not started due to RAW hazard
-
+				continue;
 			if (this->Store_ReservationStations[i].instruction->Instruction_Status.Execution_Start_Time == -1)
 			{
 				if (this->Store_ReservationStations[i].instruction->Instruction_Status.Issue_Instruction == current_Cycle_Number)
-					continue; //the instruction has been Issue_Instructiond in the current cycle, so it cannot start execution in the current cycle
-
-				//execution started
+					continue; 
 				this->Store_ReservationStations[i].instruction->Instruction_Status.Execution_Start_Time = current_Cycle_Number;
 				this->Store_ReservationStations[i].instruction->Instruction_Status.executionCyclesRemaining--;
 
 				if (this->Store_ReservationStations[i].instruction->Instruction_Status.executionCyclesRemaining == 0)
-				{   //execution completed
+				{   
 					this->Store_ReservationStations[i].instruction->Instruction_Status.Execution_Complete_Time = current_Cycle_Number;
-					// += "-> The instruction at Store Buffer= " + this->Store_ReservationStations[i].name + " has completed execution.\n";
 					continue;
 				}
 				else
 				{
-					// += "-> The instruction at Store Buffer= " + this->Store_ReservationStations[i].name + " has started execution.\n";
 					continue;
 				}
 			}
@@ -1118,18 +1620,16 @@ struct Tomasulo
 			else continue;
 
 			if (this->Store_ReservationStations[i].instruction->Instruction_Status.executionCyclesRemaining == 0)
-			{   //execution completed
+			{   
 				this->Store_ReservationStations[i].instruction->Instruction_Status.Execution_Complete_Time = current_Cycle_Number;
-				// += "-> The instruction at Store Buffer= " + this->Store_ReservationStations[i].name + " has completed execution.\n";
 				continue;
 			}
 			else
 			{
-				// += "-> the instruction at Store Buffer= " + this->Store_ReservationStations[i].name + " has completed one more execution cycle.\n";
 				continue;
 			}
 
-		}//end of store buffers loop
+		}
 
 
 		for (int i = 0; i < totalAddSub_ReservationStations; i++)
@@ -1158,6 +1658,8 @@ struct Tomasulo
 				}
 			}
 
+
+
 			if (this->AddSub_ReservationStations[i].instruction->Instruction_Status.executionCyclesRemaining != 0)
 				this->AddSub_ReservationStations[i].instruction->Instruction_Status.executionCyclesRemaining--;
 			else continue;
@@ -1165,23 +1667,109 @@ struct Tomasulo
 			if (this->AddSub_ReservationStations[i].instruction->Instruction_Status.executionCyclesRemaining == 0)
 			{   //execution completed
 				this->AddSub_ReservationStations[i].instruction->Instruction_Status.Execution_Complete_Time = current_Cycle_Number;
-				// += "-> The instruction at Reservation Station= " + this->AddSub_ReservationStations[i].name + " has completed execution.\n";
 				continue;
 			}
 			else
 			{
-				// += "-> the instruction at Reservation Station= " + this->AddSub_ReservationStations[i].name + " has completed one more execution cycle.\n";
 				continue;
 			}
 
-		}//end of addSub Reservation Stations loop
+		}
+
+		for (int i = 0; i < totalBeq_Reservation_Stations; i++)
+		{
+			if (this->Beq_ReservationStations[i].isBusy == false)
+				continue;
+
+			if (this->Beq_ReservationStations[i].Qj != "" || this->Beq_ReservationStations[i].Qk != "")
+				continue;
+
+			if (this->Beq_ReservationStations[i].instruction->Instruction_Status.Execution_Start_Time == -1)
+			{
+				if (this->Beq_ReservationStations[i].instruction->Instruction_Status.Issue_Instruction == current_Cycle_Number)
+					continue;
+				this->Beq_ReservationStations[i].instruction->Instruction_Status.Execution_Start_Time = current_Cycle_Number;
+				this->Beq_ReservationStations[i].instruction->Instruction_Status.executionCyclesRemaining--;
+
+				if (this->Beq_ReservationStations[i].instruction->Instruction_Status.executionCyclesRemaining == 0)
+				{
+					this->Beq_ReservationStations[i].instruction->Instruction_Status.Execution_Complete_Time = current_Cycle_Number;
+					continue;
+				}
+				else
+				{
+					continue;
+				}
+			}
+
+
+
+			if (this->Beq_ReservationStations[i].instruction->Instruction_Status.executionCyclesRemaining != 0)
+				this->Beq_ReservationStations[i].instruction->Instruction_Status.executionCyclesRemaining--;
+			else continue;
+
+			if (this->Beq_ReservationStations[i].instruction->Instruction_Status.executionCyclesRemaining == 0)
+			{   //execution completed
+				this->Beq_ReservationStations[i].instruction->Instruction_Status.Execution_Complete_Time = current_Cycle_Number;
+				continue;
+			}
+			else
+			{
+				continue;
+			}
+
+		}
+
+		for (int i = 0; i < totalJal_Reservation_Stations; i++)
+		{
+			if (this->Jal_ReservationStations[i].isBusy == false)
+				continue;
+
+			if (this->Jal_ReservationStations[i].Qj != "" || this->Jal_ReservationStations[i].Qk != "")
+				continue;
+
+			if (this->Jal_ReservationStations[i].instruction->Instruction_Status.Execution_Start_Time == -1)
+			{
+				if (this->Jal_ReservationStations[i].instruction->Instruction_Status.Issue_Instruction == current_Cycle_Number)
+					continue;
+				this->Jal_ReservationStations[i].instruction->Instruction_Status.Execution_Start_Time = current_Cycle_Number;
+				this->Jal_ReservationStations[i].instruction->Instruction_Status.executionCyclesRemaining--;
+
+				if (this->Jal_ReservationStations[i].instruction->Instruction_Status.executionCyclesRemaining == 0)
+				{
+					this->Jal_ReservationStations[i].instruction->Instruction_Status.Execution_Complete_Time = current_Cycle_Number;
+					continue;
+				}
+				else
+				{
+					continue;
+				}
+			}
+
+
+
+			if (this->Jal_ReservationStations[i].instruction->Instruction_Status.executionCyclesRemaining != 0)
+				this->Jal_ReservationStations[i].instruction->Instruction_Status.executionCyclesRemaining--;
+			else continue;
+
+			if (this->Jal_ReservationStations[i].instruction->Instruction_Status.executionCyclesRemaining == 0)
+			{   //execution completed
+				this->Jal_ReservationStations[i].instruction->Instruction_Status.Execution_Complete_Time = current_Cycle_Number;
+				continue;
+			}
+			else
+			{
+				continue;
+			}
+
+		}
 
 		for (int i = 0; i < totalNeg_ReservationStations; i++)
 		{
 			if (this->Neg_ReservationStations[i].isBusy == false)
 				continue;
 
-			if (this->Neg_ReservationStations[i].Qj != "" || this->Neg_ReservationStations[i].Qk != "")
+			if (this->Neg_ReservationStations[i].Qj != "")
 				continue;
 
 			if (this->Neg_ReservationStations[i].instruction->Instruction_Status.Execution_Start_Time == -1)
@@ -1229,12 +1817,12 @@ struct Tomasulo
 			if (this->Nor_ReservationStations[i].instruction->Instruction_Status.Execution_Start_Time == -1)
 			{
 				if (this->Nor_ReservationStations[i].instruction->Instruction_Status.Issue_Instruction == current_Cycle_Number)
-					continue; 
+					continue;
 				this->Nor_ReservationStations[i].instruction->Instruction_Status.Execution_Start_Time = current_Cycle_Number;
 				this->Nor_ReservationStations[i].instruction->Instruction_Status.executionCyclesRemaining--;
 
 				if (this->Nor_ReservationStations[i].instruction->Instruction_Status.executionCyclesRemaining == 0)
-				{   
+				{
 					this->Nor_ReservationStations[i].instruction->Instruction_Status.Execution_Complete_Time = current_Cycle_Number;
 					continue;
 				}
@@ -1244,12 +1832,15 @@ struct Tomasulo
 				}
 			}
 
+
+
 			if (this->Nor_ReservationStations[i].instruction->Instruction_Status.executionCyclesRemaining != 0)
 				this->Nor_ReservationStations[i].instruction->Instruction_Status.executionCyclesRemaining--;
 			else continue;
 
 			if (this->Nor_ReservationStations[i].instruction->Instruction_Status.executionCyclesRemaining == 0)
-			{   this->Nor_ReservationStations[i].instruction->Instruction_Status.Execution_Complete_Time = current_Cycle_Number;
+			{   //execution completed
+				this->Nor_ReservationStations[i].instruction->Instruction_Status.Execution_Complete_Time = current_Cycle_Number;
 				continue;
 			}
 			else
@@ -1316,6 +1907,13 @@ struct Tomasulo
 		{
 			cout << "Current Cycle Number= " << current_Cycle_Number;
 			print();
+			cout << endl;
+			for (int i = 0; i < totalRegisters; i++) {
+				cout << "Register " << i << ": " << registerStatus[i].Register_Value<<endl;
+			}
+			for (int i = 0; i < totalMemoryLocations; i++) {
+				cout << "Memory Location " << data_memory[i].Data_Memory_Location << ": " << data_memory[i].Memory_Value<< endl;
+			}
 			char refresh_entry;
 			cout << endl << "Enter any character and press enter for new frame: ";
 			cin >> refresh_entry;
@@ -1326,7 +1924,7 @@ struct Tomasulo
 				currentInstruction_Number_ToBeIssued++;
 
 			execute();
-			Write_Back();
+			Write_Back(currentInstruction_Number_ToBeIssued);
 
 
 
@@ -1336,7 +1934,6 @@ struct Tomasulo
 
 	void print()
 	{
-		int y = 10;
 		cout << endl << "Instructions:" << endl;
 
 		for (int i = 0; i < totalInstructions; i++)
@@ -1351,7 +1948,14 @@ struct Tomasulo
 				cout << std::left << setw(3) << arr << std::left << setw(5) << instructions[i].Instruction_Type << setfill(' ') << std::right << setw(4) << instructions[i].Rt << setw(5) << instructions[i].Immediate_Offset << "+" << setw(5) << instructions[i].Rs;
 				cout << endl;
 			}
-
+			else if (instructions[i].Instruction_Type == Instruction_Type::BEQ) {
+				cout << std::left << setw(3) << arr << std::left << setw(5) << instructions[i].Instruction_Type << std::right << setw(4) << instructions[i].Rd << setw(5) << instructions[i].Rs << setw(6) << instructions[i].Immediate_Offset;
+				cout << endl;
+			}
+			else if (instructions[i].Instruction_Type == Instruction_Type::JAL) {
+				cout << std::left << setw(3) << arr << std::left << setw(5) << instructions[i].Instruction_Type << std::right << setw(4) << instructions[i].Rd << setw(5) << instructions[i].Rs << setw(6) << instructions[i].Immediate_Offset;
+				cout << endl;
+			}
 			else
 			{
 
@@ -1385,9 +1989,10 @@ struct Tomasulo
 		}
 		cout << "Reservation Stations:";
 		cout << endl;
-		cout << "\t\t\t\t" << " Name   Busy    Op      Vj       Vk       Qj       Qk ";
+		cout << "  Name " << "\t\t\t\t" <<"  Busy    Op      Vj       Vk       Qj       Qk ";
 		cout << endl;
 		cout << "\t\t\t\t" << "___________________________________________________";
+		
 		for (int i = 0; i < totalAddSub_ReservationStations; i++)
 		{
 			cout << endl;
@@ -1399,6 +2004,7 @@ struct Tomasulo
 			cout << endl;
 			cout << "\t\t\t\t" << "|_____|_______|________|________|________|________|";
 		}
+
 
 		for (int i = 0; i < totalMultDiv_ReservationStations; i++)
 		{
@@ -1413,6 +2019,52 @@ struct Tomasulo
 		}
 
 		
+		for (int i = 0; i < totalNeg_ReservationStations; i++)
+		{
+			cout << endl;
+			cout << std::right << setw(7) << Neg_ReservationStations[i].name << "\t\t\t\t" << "|" << setw(5) << (Neg_ReservationStations[i].isBusy == true ? "yes" : "no") << "|" << setw(7) << Neg_ReservationStations[i].Instruction_Type << "|" << setw(8) << Neg_ReservationStations[i].Vj << "|" << setw(8) << Neg_ReservationStations[i].Vk << "|" << setw(8) << Neg_ReservationStations[i].Qj << "|" << setw(8) << Neg_ReservationStations[i].Qk << "|";
+			if (Neg_ReservationStations[i].instruction != nullptr)
+			{
+				cout << setw(3) << Neg_ReservationStations[i].instruction->Instruction_Status.executionCyclesRemaining;
+			}
+			cout << endl;
+			cout << "\t\t\t\t" << "|_____|_______|________|________|________|________|";
+		}
+
+		for (int i = 0; i < totalNor_ReservationStations; i++)
+		{
+			cout << endl;
+			cout << std::right << setw(7) << Nor_ReservationStations[i].name << "\t\t\t\t" << "|" << setw(5) << (Nor_ReservationStations[i].isBusy == true ? "yes" : "no") << "|" << setw(7) << Nor_ReservationStations[i].Instruction_Type << "|" << setw(8) << Nor_ReservationStations[i].Vj << "|" << setw(8) << Nor_ReservationStations[i].Vk << "|" << setw(8) << Nor_ReservationStations[i].Qj << "|" << setw(8) << Nor_ReservationStations[i].Qk << "|";
+			if (Nor_ReservationStations[i].instruction != nullptr)
+			{
+				cout << setw(3) << Nor_ReservationStations[i].instruction->Instruction_Status.executionCyclesRemaining;
+			}
+			cout << endl;
+			cout << "\t\t\t\t" << "|_____|_______|________|________|________|________|";
+		}
+		for (int i = 0; i < totalBeq_Reservation_Stations; i++)
+		{
+			cout << endl;
+			cout << std::right << setw(7) << Beq_ReservationStations[i].name << "\t\t\t\t" << "|" << setw(5) << (Beq_ReservationStations[i].isBusy == true ? "yes" : "no") << "|" << setw(7) << Beq_ReservationStations[i].Instruction_Type << "|" << setw(8) << Beq_ReservationStations[i].Vj << "|" << setw(8) << Beq_ReservationStations[i].Vk << "|" << setw(8) << Beq_ReservationStations[i].Qj << "|" << setw(8) << Beq_ReservationStations[i].Qk << "|";
+			if (Beq_ReservationStations[i].instruction != nullptr)
+			{
+				cout << setw(3) << Beq_ReservationStations[i].instruction->Instruction_Status.executionCyclesRemaining;
+			}
+			cout << endl;
+			cout << "\t\t\t\t" << "|_____|_______|________|________|________|________|";
+		}
+		for (int i = 0; i < totalJal_Reservation_Stations; i++)
+		{
+			cout << endl;
+			cout << std::right << setw(7) << Jal_ReservationStations[i].name << "\t\t\t\t" << "|" << setw(5) << (Jal_ReservationStations[i].isBusy == true ? "yes" : "no") << "|" << setw(7) << Jal_ReservationStations[i].Instruction_Type << "|" << setw(8) << Jal_ReservationStations[i].Vj << "|" << setw(8) << Jal_ReservationStations[i].Vk << "|" << setw(8) << Jal_ReservationStations[i].Qj << "|" << setw(8) << Jal_ReservationStations[i].Qk << "|";
+			if (Jal_ReservationStations[i].instruction != nullptr)
+			{
+				cout << setw(3) << Jal_ReservationStations[i].instruction->Instruction_Status.executionCyclesRemaining;
+			}
+			cout << endl;
+			cout << "\t\t\t\t" << "|_____|_______|________|________|________|________|";
+		}
+
 	}
 	Tomasulo()
 	{
@@ -1420,3 +2072,83 @@ struct Tomasulo
 	}
 };
 
+string decimal_to_binary(int number) {
+	string bin;
+	if (number == 0) {
+		bin = '0';
+	}
+	else {
+		int n = (int)(log2(number));
+		bin = bitset<64>(number).to_string().substr(64 - n - 1);
+	}
+	return bin;
+}
+
+int twos_complement(string bin) {
+	int len, i;
+	bool firstone = false;
+	string twos;
+	len = bin.length();
+	twos.resize(len);
+
+	for (i = (len - 1); i >= 0; i--)
+	{
+		if (firstone == false)
+		{
+			if (bin[i] == '0')
+			{
+				twos[i] = '0';
+			}
+			else
+			{
+				twos[i] = '1';
+				firstone = true;
+			}
+		}
+		else
+		{
+			if (bin[i] == '0')
+			{
+				twos[i] = '1';
+			}
+			else
+			{
+				twos[i] = '0';
+			}
+		}
+	}
+
+	int two_complement_int = stoi(twos, 0, 2);
+
+	return two_complement_int;
+}
+
+int nor_operation(string bin1, string bin2) {
+	string res_bin;
+	int len1, len2, i;
+	len1 = bin1.length();
+	len2 = bin2.length();
+	int biglen = (len1 > len2) ? len1 : len2;
+	for (int i = 0; i < biglen; i++)
+		res_bin.insert(0, "0");
+	if (len2 > len1) {
+		for (int i = 0; i < abs(len2 - len1); i++)
+			bin1.insert(0, "0");
+	}
+	else if (len1 > len2) {
+		for (int i = 0; i < abs(len2 - len1); i++)
+			bin1.insert(0, "0");
+	}
+
+	for (int i = 0; i < biglen; i++) {
+		if (bin1[i] == '0' && bin2[i] == '0') {
+			res_bin[i] = '1';
+		}
+		else {
+			res_bin[i] = '0';
+		}
+	}
+	int res_int = stoi(res_bin, 0, 2);
+
+	return res_int;
+}

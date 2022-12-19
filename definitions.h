@@ -51,13 +51,16 @@ struct ReservationStationType
 	static string const MULT;
 	static string const NEG;
 	static string const NOR;
+	static string const BEQ;
+	static string const JAL;
 };
 
 string const ReservationStationType::ADD = "ADD";
 string const ReservationStationType::MULT = "MUL";
 string const ReservationStationType::NEG = "NEG";
 string const ReservationStationType::NOR = "NOR";
-
+string const ReservationStationType::BEQ = "BEQ";
+string const ReservationStationType::JAL = "JAL";
 struct LoadStoreBufferType
 {
 	static string const LOAD;
@@ -75,6 +78,7 @@ struct Instruction
 	string Rs;
 	string Rt;
 	int Immediate_Offset; 
+	string label;
 	Instruction_Status Instruction_Status;
 
 	Instruction()
@@ -84,11 +88,17 @@ struct Instruction
 	}
 };
 
+struct DataMemory
+{
+	string Data_Memory_Location;
+	int Memory_Value;
+};
+
 struct RegisterStatus
 {
 	string Register_Name;
 	string writing_reg;
-
+	int Register_Value;
 };
 
 struct ReservationStation

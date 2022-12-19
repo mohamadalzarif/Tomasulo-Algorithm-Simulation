@@ -3,6 +3,8 @@ Add_Sub_Reservation_Stations 3
 Mul_Div_Reservation_Stations 2
 Neg_Reservation_Stations 1
 Nor_Reservation_Stations 1
+Jal_Reservation_Stations 1
+Beq_Reservation_Stations 1
 Load_Buffers    2
 Store_Buffers   2
 #Enter cycles needed for each instructions
@@ -12,14 +14,18 @@ Div_Cycles 8
 Load_Cycles 4
 Store_Cycles 3
 Neg_Cycles 1
+Jal_Cycles 1
+Beq_Cycles 1
 Nor_Cycles 1
 #Enter amount of registers 
 REG 8
 #Enter instruction amount in first line, then enter instructions
-6
-Add R2 34 R2
-Store R2 45 R3
+8
+JAL 4
+Add   R2 34 R2
+Store R2 1 R3
 Mul  R0 R2 R4
-Nor  R7 R6 R2
-Div  R4 R0 R6
-Add  R6 R7 R2
+Mul  R4 R0 R6
+Nor  R7 R4 R6
+Add  R6 R6 R2
+RETURN
